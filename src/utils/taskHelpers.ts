@@ -1,3 +1,4 @@
+// src/utils/taskHelpers.ts
 import { Task } from '@/types';
 
 // Define interfaces for better type safety
@@ -17,9 +18,9 @@ interface CleanedRowData {
   [key: string]: string | number | Date | undefined;
 }
 
-export const createTask = (data: RawTaskData, headers: string[]): Task => {
+export const createTask = (data: RawTaskData, headers: string[], projectId?: string): Task => {
   // Generate unique ID
-  const id = data.id || Date.now().toString() + Math.random().toString(36).substr(2, 9);
+  const id = data.id || `${projectId || 'default'}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   // Handle status field - check multiple possible field names
   const status = data.Status || data.status || 'Not Started';
@@ -39,11 +40,12 @@ export const createTask = (data: RawTaskData, headers: string[]): Task => {
     id,
     status,
     assignee,
+    projectId: projectId || 'default', // Provide default for backwards compatibility
     createdAt: new Date(),
   };
 
   // Add all other fields dynamically, excluding the ones we've already handled
-  const excludedFields = ['id', 'status', 'assignee', 'Status', 'Assigned To', 'Assignee', 'assigned_to', 'assigned to', 'createdAt'];
+  const excludedFields = ['id', 'status', 'assignee', 'Status', 'Assigned To', 'Assignee', 'assigned_to', 'assigned to', 'createdAt', 'projectId'];
   
   headers.forEach(header => {
     if (!excludedFields.some(excluded => excluded.toLowerCase() === header.toLowerCase())) {
@@ -71,7 +73,7 @@ export const getTaskDisplayName = (task: Task): string => {
   }
   
   // If no priority field found, find first non-empty field (excluding system fields)
-  const systemFields = ['id', 'status', 'assignee', 'createdAt'];
+  const systemFields = ['id', 'status', 'assignee', 'createdAt', 'projectId'];
   for (const [key, value] of Object.entries(task)) {
     if (!systemFields.includes(key) && value && typeof value === 'string' && value.trim()) {
       return value.trim();
@@ -81,10 +83,21 @@ export const getTaskDisplayName = (task: Task): string => {
   return 'Untitled Task';
 };
 
-export const processParsedData = (
+// Overloaded function to support both old and new signatures
+export function processParsedData(
   data: Record<string, unknown>[], 
   extractedHeaders: string[]
-): { tasks: Task[], headers: string[] } => {
+): { tasks: Task[], headers: string[] };
+export function processParsedData(
+  data: Record<string, unknown>[], 
+  extractedHeaders: string[],
+  projectId: string
+): { tasks: Task[], headers: string[] };
+export function processParsedData(
+  data: Record<string, unknown>[], 
+  extractedHeaders: string[],
+  projectId?: string
+): { tasks: Task[], headers: string[] } {
   // Clean and normalize headers
   const cleanHeaders = extractedHeaders
     .map(header => header?.toString().trim())
@@ -111,6 +124,9 @@ export const processParsedData = (
   
   // Remove duplicates while preserving order
   const uniqueHeaders = [...new Set(cleanHeaders)];
+  
+  // Use provided projectId or generate a default one
+  const currentProjectId = projectId || `default_${Date.now()}`;
   
   // Filter and process data
   const validTasks = data
@@ -144,11 +160,46 @@ export const processParsedData = (
         }
       });
       
-      return createTask(cleanedRow as RawTaskData, uniqueHeaders);
+      return createTask(cleanedRow as RawTaskData, uniqueHeaders, currentProjectId);
     });
   
   return { 
     tasks: validTasks, 
     headers: uniqueHeaders 
   };
+}
+
+// Utility functions for task management
+export const filterTasksByProject = (tasks: Task[], projectId: string): Task[] => {
+  return tasks.filter(task => task.projectId === projectId);
+};
+
+export const getTaskStats = (tasks: Task[]) => {
+  const total = tasks.length;
+  const completed = tasks.filter(task => task.status === 'Deployed').length;
+  const inProgress = tasks.filter(task => task.status === 'In Progress').length;
+  const notStarted = tasks.filter(task => task.status === 'Not Started').length;
+  const bugs = tasks.filter(task => task.status === 'Bugs').length;
+  const tested = tasks.filter(task => task.status === 'Tested').length;
+  const devCompleted = tasks.filter(task => task.status === 'Dev Completed').length;
+
+  return {
+    total,
+    completed,
+    inProgress,
+    notStarted,
+    bugs,
+    tested,
+    devCompleted,
+    completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+  };
+};
+
+export const getUniqueAssignees = (tasks: Task[]): string[] => {
+  const assignees = tasks
+    .map(task => task.assignee)
+    .filter(assignee => assignee && assignee.trim())
+    .map(assignee => assignee.trim());
+  
+  return [...new Set(assignees)].sort();
 };

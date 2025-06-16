@@ -1,9 +1,10 @@
+// components/Views/KanbanView.tsx
 'use client';
 
 import React, { useState, useRef, DragEvent } from 'react';
 import { GripVertical, User, ChevronDown, ChevronUp, Plus } from 'lucide-react';
-import { Task, KANBAN_COLUMNS, STATUS_COLORS, STATUS_CARD_STYLES, Status } from '@/types';
-import { getTaskDisplayName } from '@/utils/taskHelpers';
+import { Task, KANBAN_COLUMNS, STATUS_COLORS, STATUS_CARD_STYLES, Status } from '../types';
+import { getTaskDisplayName } from '../utils/taskHelpers';
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -210,7 +211,7 @@ export default function KanbanView({
                             {isExpanded && (
                               <div className="mt-3 space-y-2 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600 pt-3">
                                 {Object.entries(task).map(([key, value]) => {
-                                  if (!['id', 'status', 'assignee', 'createdAt', 'Task Name', 'Priority', 'Project', 'Due Date'].includes(key) && value) {
+                                  if (!['id', 'status', 'assignee', 'createdAt', 'projectId', 'Task Name', 'Priority', 'Project', 'Due Date'].includes(key) && value) {
                                     return (
                                       <div key={key} className="break-words">
                                         <span className="font-medium text-gray-700 dark:text-gray-300">{key}:</span> {value.toString()}

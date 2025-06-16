@@ -1,23 +1,23 @@
-import { ProjectMeta, TaskManagerState } from '../types';
+import { Project, ProjectData } from '../types';
 
 // Get all projects
-export function getProjects(): ProjectMeta[] {
+export function getProjects(): Project[] {
   return JSON.parse(localStorage.getItem('taskManagerProjects') || '[]');
 }
 
 // Save all projects
-export function saveProjects(projects: ProjectMeta[]) {
+export function saveProjects(projects: Project[]) {
   localStorage.setItem('taskManagerProjects', JSON.stringify(projects));
 }
 
 // Get current project data
-export function getProjectData(projectId: string): TaskManagerState | null {
+export function getProjectData(projectId: string): ProjectData | null {
   const data = localStorage.getItem(`taskManagerData_${projectId}`);
   return data ? JSON.parse(data) : null;
 }
 
 // Save current project data
-export function saveProjectData(projectId: string, data: TaskManagerState) {
+export function saveProjectData(projectId: string, data: ProjectData) {
   localStorage.setItem(`taskManagerData_${projectId}` , JSON.stringify(data));
 }
 

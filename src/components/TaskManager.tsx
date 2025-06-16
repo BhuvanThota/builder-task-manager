@@ -27,6 +27,7 @@ const mockTasks: Task[] = [
     id: '1',
     status: 'In Progress',
     assignee: 'John Doe',
+    projectId: 'default_project', // Add this line
     createdAt: new Date(),
     'Task Name': 'Implement user authentication',
     'Priority': 'High',
@@ -37,6 +38,7 @@ const mockTasks: Task[] = [
     id: '2',
     status: 'Not Started',
     assignee: 'Jane Smith',
+    projectId: 'default_project', // Add this line
     createdAt: new Date(),
     'Task Name': 'Design landing page',
     'Priority': 'Medium',
@@ -47,6 +49,7 @@ const mockTasks: Task[] = [
     id: '3',
     status: 'Dev Completed',
     assignee: 'Mike Johnson',
+    projectId: 'default_project', // Add this line
     createdAt: new Date(),
     'Task Name': 'API integration testing',
     'Priority': 'High',
@@ -57,6 +60,7 @@ const mockTasks: Task[] = [
     id: '4',
     status: 'Tested',
     assignee: 'Sarah Wilson',
+    projectId: 'default_project', // Add this line
     createdAt: new Date(),
     'Task Name': 'Database optimization',
     'Priority': 'Low',
@@ -73,26 +77,6 @@ export default function TaskManager() {
   // Local storage keys
   const STORAGE_TASKS_KEY = 'taskManager_tasks';
   const STORAGE_HEADERS_KEY = 'taskManager_headers';
-
-  // Read from localStorage or use mock data
-  function getInitialTasks(): Task[] {
-    try {
-      const stored = localStorage.getItem(STORAGE_TASKS_KEY);
-      if (stored) return JSON.parse(stored, (key, value) => {
-        if (key === 'createdAt' && value) return new Date(value);
-        return value;
-      });
-    } catch {}
-    return mockTasks;
-  }
-
-  function getInitialHeaders(): string[] {
-    try {
-      const stored = localStorage.getItem(STORAGE_HEADERS_KEY);
-      if (stored) return JSON.parse(stored);
-    } catch {}
-    return mockHeaders;
-  }
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -251,6 +235,7 @@ export default function TaskManager() {
       id: Date.now().toString(),
       status: 'Not Started',
       assignee: '',
+      projectId: 'default_project',
       createdAt: new Date(),
       'Task Name': 'New Task'
     };

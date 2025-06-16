@@ -1,7 +1,8 @@
+// components/Views/TableView.tsx
 'use client';
 
 import React, { useState } from 'react';
-import { Task, KANBAN_COLUMNS, STATUS_COLORS } from '@/types';
+import { Task, KANBAN_COLUMNS, STATUS_COLORS } from '../types';
 
 interface TableViewProps {
   tasks: Task[];

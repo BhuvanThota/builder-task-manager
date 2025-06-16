@@ -1,26 +1,49 @@
+// src/types/index.ts
 export interface Task {
   id: string;
   status: string;
   assignee: string;
   createdAt: Date;
-  [key: string]: string | number | Date | undefined | boolean; // For dynamic fields
+  projectId: string; // New: Link task to project
+  [key: string]: string | number | Date | undefined | boolean;
 }
 
-export interface TaskManagerState {
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  taskCount: number;
+  completedCount: number;
+  color: string; // For visual identification
+}
+
+export interface ProjectData {
   tasks: Task[];
   headers: string[];
+  filters: ProjectFilters;
   view: 'kanban' | 'table';
-  darkMode: boolean;
-  filterAssignee: string;
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
   currentPage: number;
-  expandedTasks: Set<string>;
+}
+
+export interface ProjectFilters {
+  assignee: string;
+  search: string;
+  status: string;
+  priority: string;
+}
+
+export interface AppState {
+  currentProjectId: string | null;
+  projects: Project[];
+  darkMode: boolean;
+  sidebarCollapsed: boolean;
 }
 
 export const KANBAN_COLUMNS = [
   'Not Started',
-  'In Progress',
+  'In Progress', 
   'Bugs',
   'Dev Completed',
   'Tested',
@@ -28,15 +51,6 @@ export const KANBAN_COLUMNS = [
 ] as const;
 
 export type Status = typeof KANBAN_COLUMNS[number];
-export type onStatusChange = (taskId: string, newStatus: Status) => void;
-
-export interface ProjectMeta {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 
 export const STATUS_COLORS: Record<string, string> = {
   'Not Started': 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600',
@@ -55,3 +69,47 @@ export const STATUS_CARD_STYLES: Record<string, string> = {
   'Tested': 'bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 ring-1 ring-inset ring-purple-300 dark:ring-purple-700 text-purple-800 dark:text-purple-300',
   'Deployed': 'bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/30 ring-1 ring-inset ring-indigo-300 dark:ring-indigo-700 text-indigo-800 dark:text-indigo-300',
 };
+
+export const PROJECT_COLORS = [
+  '#3B82F6', // Blue
+  '#10B981', // Emerald
+  '#F59E0B', // Amber
+  '#EF4444', // Red
+  '#8B5CF6', // Violet
+  '#06B6D4', // Cyan
+  '#84CC16', // Lime
+  '#F97316', // Orange
+  '#EC4899', // Pink
+  '#6366F1'  // Indigo
+];
+
+export const MAX_PROJECTS = 10;
+
+// Database-ready interfaces for future PostgreSQL migration
+export interface DatabaseProject {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  created_at: Date;
+  updated_at: Date;
+  user_id?: string; // For multi-user support
+}
+
+export interface DatabaseTask {
+  id: string;
+  project_id: string;
+  status: string;
+  assignee: string | null;
+  created_at: Date;
+  updated_at: Date;
+  data: Record<string, string | number | Date | boolean | null | undefined>; // JSON field for dynamic task fields
+  user_id?: string;
+}
+
+export interface DatabaseProjectHeaders {
+  id: string;
+  project_id: string;
+  headers: string[];
+  created_at: Date;
+}
