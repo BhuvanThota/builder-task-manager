@@ -1,5 +1,5 @@
-import TaskManager from '@/components/TaskManager'
+import MultiProjectTaskManager from '@/components/TaskManager/MultiProjectTaskManager'
 
 export default function Home() {
-  return <TaskManager />
+  return <MultiProjectTaskManager />
 }
