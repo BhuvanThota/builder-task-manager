@@ -109,9 +109,6 @@ export default function TableView({
                           onChange={(e) => {
                             e.stopPropagation();
                             onStatusChange(task.id, e.target.value);
-                            console.log(task.id, e.target.value);
-                            console.log(task.status);
-                            console.log(STATUS_COLORS[e.target.value]);
                           }}
                           onClick={(e) => e.stopPropagation()}
                           className={`px-2 py-1 text-xs rounded-full border ${STATUS_COLORS[task.status] || 'bg-gray-100 text-gray-800 border-gray-300'} cursor-pointer`}

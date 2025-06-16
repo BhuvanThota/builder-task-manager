@@ -51,7 +51,23 @@ const config = {
         'bg-purple-100', 'text-purple-800', 'border-purple-300',
         'dark:bg-purple-900/30', 'dark:text-purple-300', 'dark:border-purple-700',
         'bg-indigo-100', 'text-indigo-800', 'border-indigo-300',
-        'dark:bg-indigo-900/30', 'dark:text-indigo-300', 'dark:border-indigo-700'
+        'dark:bg-indigo-900/30', 'dark:text-indigo-300', 'dark:border-indigo-700',
+        'bg-gradient-to-br', 
+        'from-gray-100', 'to-gray-200', 'dark:from-gray-700', 'dark:to-gray-800',
+        'from-blue-100', 'to-blue-200', 'dark:from-blue-900/30', 'dark:to-blue-800/30',
+        'from-red-100', 'to-red-200', 'dark:from-red-900/30', 'dark:to-red-800/30',
+        'from-green-100', 'to-green-200', 'dark:from-green-900/30', 'dark:to-green-800/30',
+        'from-purple-100', 'to-purple-200', 'dark:from-purple-900/30', 'dark:to-purple-800/30',
+        'from-indigo-100', 'to-indigo-200', 'dark:from-indigo-900/30', 'dark:to-indigo-800/30',
+        'ring-1', 'ring-inset',
+        'ring-gray-300', 'dark:ring-gray-600',
+        'ring-blue-300', 'dark:ring-blue-700',
+        'ring-red-300', 'dark:ring-red-700',
+        'ring-green-300', 'dark:ring-green-700',
+        'ring-purple-300', 'dark:ring-purple-700',
+        'ring-indigo-300', 'dark:ring-indigo-700',
+
+        'hover:ring-2', 'hover:ring-offset-1', 'hover:ring-opacity-40'
     ],
     plugins: [],
   }

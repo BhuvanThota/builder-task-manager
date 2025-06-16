@@ -70,8 +70,34 @@ const mockHeaders = ['Task Name', 'Priority', 'Project', 'Due Date'];
 const ITEMS_PER_PAGE = 20;
 
 export default function TaskManager() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [headers, setHeaders] = useState<string[]>(mockHeaders);
+  // Local storage keys
+  const STORAGE_TASKS_KEY = 'taskManager_tasks';
+  const STORAGE_HEADERS_KEY = 'taskManager_headers';
+
+  // Read from localStorage or use mock data
+  function getInitialTasks(): Task[] {
+    try {
+      const stored = localStorage.getItem(STORAGE_TASKS_KEY);
+      if (stored) return JSON.parse(stored, (key, value) => {
+        if (key === 'createdAt' && value) return new Date(value);
+        return value;
+      });
+    } catch {}
+    return mockTasks;
+  }
+
+  function getInitialHeaders(): string[] {
+    try {
+      const stored = localStorage.getItem(STORAGE_HEADERS_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return mockHeaders;
+  }
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const [view, setView] = useState<'kanban' | 'table'>('kanban');
   const [darkMode, setDarkMode] = useState(false);
   const [filterAssignee, setFilterAssignee] = useState('');
@@ -90,22 +116,29 @@ export default function TaskManager() {
     setHeaders(newHeaders);
     setCurrentPage(1);
     setError('');
+    // Save to localStorage
+    localStorage.setItem(STORAGE_TASKS_KEY, JSON.stringify(newTasks));
+    localStorage.setItem(STORAGE_HEADERS_KEY, JSON.stringify(newHeaders));
   }, []);
 
   const handleStatusChange = useCallback((taskId: string, newStatus: string) => {
-    setTasks(prevTasks => 
-      prevTasks.map(task => 
+    setTasks(prevTasks => {
+      const updated = prevTasks.map(task =>
         task.id === taskId ? { ...task, status: newStatus } : task
-      )
-    );
+      );
+      localStorage.setItem(STORAGE_TASKS_KEY, JSON.stringify(updated));
+      return updated;
+    });
   }, []);
 
   const handleFieldUpdate = useCallback((taskId: string, field: string, value: string) => {
-    setTasks(prevTasks => 
-      prevTasks.map(task => 
+    setTasks(prevTasks => {
+      const updated = prevTasks.map(task =>
         task.id === taskId ? { ...task, [field]: value } : task
-      )
-    );
+      );
+      localStorage.setItem(STORAGE_TASKS_KEY, JSON.stringify(updated));
+      return updated;
+    });
   }, []);
 
   const handleTaskClick = useCallback((task: Task) => {
@@ -114,16 +147,22 @@ export default function TaskManager() {
   }, []);
 
   const handleTaskUpdate = useCallback((updatedTask: Task) => {
-    setTasks(prevTasks => 
-      prevTasks.map(task => 
+    setTasks(prevTasks => {
+      const updated = prevTasks.map(task =>
         task.id === updatedTask.id ? updatedTask : task
-      )
-    );
+      );
+      localStorage.setItem(STORAGE_TASKS_KEY, JSON.stringify(updated));
+      return updated;
+    });
     setSelectedTask(updatedTask);
   }, []);
 
   const handleTaskDelete = useCallback((taskId: string) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    setTasks(prevTasks => {
+      const updated = prevTasks.filter(task => task.id !== taskId);
+      localStorage.setItem(STORAGE_TASKS_KEY, JSON.stringify(updated));
+      return updated;
+    });
     setIsModalOpen(false);
     setSelectedTask(null);
   }, []);
@@ -215,18 +254,71 @@ export default function TaskManager() {
       createdAt: new Date(),
       'Task Name': 'New Task'
     };
-    setTasks(prev => [newTask, ...prev]);
+    setTasks(prev => {
+      const updated = [newTask, ...prev];
+      localStorage.setItem(STORAGE_TASKS_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'Deployed').length;
   const inProgressTasks = tasks.filter(t => t.status === 'In Progress').length;
 
+  // Reset localStorage and restore defaults
+  const handleReset = () => {
+    localStorage.removeItem(STORAGE_TASKS_KEY);
+    localStorage.removeItem(STORAGE_HEADERS_KEY);
+    setTasks(mockTasks);
+    setHeaders(mockHeaders);
+    setCurrentPage(1);
+    setError('');
+    setShowResetModal(false);
+  };
+
+  // On mount, load tasks/headers from localStorage or mock data
+  React.useEffect(() => {
+    function getInitialTasks(): Task[] {
+      try {
+        const stored = localStorage.getItem(STORAGE_TASKS_KEY);
+        if (stored) return JSON.parse(stored, (key, value) => {
+          if (key === 'createdAt' && value) return new Date(value);
+          return value;
+        });
+      } catch {}
+      // Use mockTasks but convert date strings to Date on client
+      return mockTasks.map(task => ({
+        ...task,
+        createdAt: typeof task.createdAt === 'string' ? new Date(task.createdAt) : task.createdAt
+      }));
+    }
+    function getInitialHeaders(): string[] {
+      try {
+        const stored = localStorage.getItem(STORAGE_HEADERS_KEY);
+        if (stored) return JSON.parse(stored);
+      } catch {}
+      return mockHeaders;
+    }
+    setTasks(getInitialTasks());
+    setHeaders(getInitialHeaders());
+    setIsLoaded(true);
+
+    // In case another tab resets localStorage
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_TASKS_KEY || e.key === STORAGE_HEADERS_KEY) {
+        setTasks(getInitialTasks());
+        setHeaders(getInitialHeaders());
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   return (
     <div className={`min-h-screen transition-colors duration-200 ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo and Title */}
             <div className="flex items-center space-x-4">
@@ -250,15 +342,15 @@ export default function TaskManager() {
               {/* Stats */}
               <div className="hidden md:flex items-center space-x-6 text-sm">
                 <div className="text-center">
-                  <div className="font-semibold text-gray-900 dark:text-white">{totalTasks}</div>
+                  <div className="font-semibold text-gray-900 dark:text-white">{isLoaded ? totalTasks : '-'}</div>
                   <div className="text-gray-500 dark:text-gray-400">Total</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-semibold text-blue-600">{inProgressTasks}</div>
+                  <div className="font-semibold text-blue-600">{isLoaded ? inProgressTasks : '-'}</div>
                   <div className="text-gray-500 dark:text-gray-400">Active</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-semibold text-green-600">{completedTasks}</div>
+                  <div className="font-semibold text-green-600">{isLoaded ? completedTasks : '-'}</div>
                   <div className="text-gray-500 dark:text-gray-400">Done</div>
                 </div>
               </div>
@@ -296,8 +388,8 @@ export default function TaskManager() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content - Full Width for Kanban */}
+      <div className={`w-full ${view === 'kanban' ? 'px-4 sm:px-6 lg:px-8' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'} py-8`}>
         {/* Action Bar */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -305,7 +397,7 @@ export default function TaskManager() {
             <div className="flex flex-wrap items-center gap-3 relative">
               <FileUpload onDataLoaded={handleDataLoaded} onError={setError} />
               <CSVTextInput onDataLoaded={handleDataLoaded} onError={setError} />
-
+              
               <button 
                 onClick={handleExport}
                 className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
@@ -321,6 +413,15 @@ export default function TaskManager() {
                 <Plus size={18} />
                 Add Task
               </button>
+
+              <button
+                onClick={() => setShowResetModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+                title="Reset and clear all task data"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                Reset
+              </button> 
             </div>
 
             {/* Right Side - Search and Filters */}
@@ -402,13 +503,17 @@ export default function TaskManager() {
         {/* Task Count */}
         <div className="mb-6">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {filteredTasks.length} of {totalTasks} tasks
+            {isLoaded ? (
+              <>Showing {filteredTasks.length} of {totalTasks} tasks</>
+            ) : (
+              <>Loading tasks...</>
+            )}
           </p>
         </div>
 
         {/* Views */}
         {view === 'kanban' ? (
-          <KanbanView 
+          <KanbanView
             tasks={filteredTasks}
             onStatusChange={handleStatusChange}
             expandedTasks={expandedTasks}
@@ -444,6 +549,32 @@ export default function TaskManager() {
           </div>
         )}
       </div>
+
+      {/* Reset Confirmation Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-sm w-full border border-red-400">
+            <h2 className="text-xl font-bold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
+              <AlertCircle size={20} className="text-red-500" /> Confirm Reset
+            </h2>
+            <p className="text-gray-700 dark:text-gray-200 mb-6">Are you sure you want to reset all task data? <b>This cannot be undone.</b></p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+                onClick={() => setShowResetModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-semibold"
+                onClick={handleReset}
+              >
+                Yes, Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Task Details Modal */}
       <TaskDetailsModal
