@@ -17,6 +17,7 @@ import FileUpload from './FileUpload';
 import CSVTextInput from './CSVTextInput';
 import KanbanView from './KanbanView';
 import TableView from './TableView';
+import TaskDetailsModal from './TaskDetailsModal';
 import ThemeToggle from './ThemeToggle';
 import ExcelJS from 'exceljs';
 
@@ -79,6 +80,10 @@ export default function TaskManager() {
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState('');
+  
+  // Modal state
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleDataLoaded = useCallback((newTasks: Task[], newHeaders: string[]) => {
     setTasks(newTasks);
@@ -101,6 +106,31 @@ export default function TaskManager() {
         task.id === taskId ? { ...task, [field]: value } : task
       )
     );
+  }, []);
+
+  const handleTaskClick = useCallback((task: Task) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleTaskUpdate = useCallback((updatedTask: Task) => {
+    setTasks(prevTasks => 
+      prevTasks.map(task => 
+        task.id === updatedTask.id ? updatedTask : task
+      )
+    );
+    setSelectedTask(updatedTask);
+  }, []);
+
+  const handleTaskDelete = useCallback((taskId: string) => {
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    setIsModalOpen(false);
+    setSelectedTask(null);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedTask(null);
   }, []);
 
   const toggleTaskExpansion = useCallback((taskId: string) => {
@@ -383,6 +413,7 @@ export default function TaskManager() {
             onStatusChange={handleStatusChange}
             expandedTasks={expandedTasks}
             toggleTaskExpansion={toggleTaskExpansion}
+            onTaskClick={handleTaskClick}
           />
         ) : (
           <TableView
@@ -390,6 +421,7 @@ export default function TaskManager() {
             headers={headers}
             onStatusChange={handleStatusChange}
             onFieldUpdate={handleFieldUpdate}
+            onTaskClick={handleTaskClick}
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
@@ -412,6 +444,16 @@ export default function TaskManager() {
           </div>
         )}
       </div>
+
+      {/* Task Details Modal */}
+      <TaskDetailsModal
+        task={selectedTask}
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onUpdate={handleTaskUpdate}
+        onDelete={handleTaskDelete}
+        headers={headers}
+      />
     </div>
   );
 }

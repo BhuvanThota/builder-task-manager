@@ -10,13 +10,15 @@ interface KanbanViewProps {
   onStatusChange: (taskId: string, newStatus: string) => void;
   expandedTasks: Set<string>;
   toggleTaskExpansion: (taskId: string) => void;
+  onTaskClick: (task: Task) => void;
 }
 
 export default function KanbanView({ 
   tasks, 
   onStatusChange, 
   expandedTasks, 
-  toggleTaskExpansion 
+  toggleTaskExpansion,
+  onTaskClick 
 }: KanbanViewProps) {
   const [draggingTask, setDraggingTask] = useState<Task | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
@@ -71,6 +73,13 @@ export default function KanbanView({
     dragCounter.current = 0;
   };
 
+  const handleTaskClick = (e: React.MouseEvent, task: Task) => {
+    // Don't trigger click if we're dragging
+    if (draggingTask) return;
+    
+    onTaskClick(task);
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
       {KANBAN_COLUMNS.map(column => (
@@ -110,8 +119,9 @@ export default function KanbanView({
                   draggable
                   onDragStart={(e) => handleDragStart(e, task)}
                   onDragEnd={handleDragEnd}
-                  className={`bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 cursor-move transition-all group ${
-                    draggingTask?.id === task.id ? 'opacity-50' : 'hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500'
+                  onClick={(e) => handleTaskClick(e, task)}
+                  className={`bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer transition-all group ${
+                    draggingTask?.id === task.id ? 'opacity-50' : 'hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-600'
                   }`}
                 >
                   <div className="flex items-start gap-3">

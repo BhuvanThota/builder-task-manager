@@ -8,6 +8,7 @@ interface TableViewProps {
   headers: string[];
   onStatusChange: (taskId: string, newStatus: string) => void;
   onFieldUpdate: (taskId: string, field: string, value: string) => void;
+  onTaskClick: (task: Task) => void;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -18,6 +19,7 @@ export default function TableView({
   headers,
   onStatusChange,
   onFieldUpdate,
+  onTaskClick,
   currentPage,
   totalPages,
   onPageChange
@@ -25,7 +27,8 @@ export default function TableView({
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
 
-  const handleEdit = (taskId: string, field: string, value: string) => {
+  const handleEdit = (e: React.MouseEvent, taskId: string, field: string, value: string) => {
+    e.stopPropagation(); // Prevent row click when editing
     setEditingCell(`${taskId}-${field}`);
     setEditValue(value || '');
   };
@@ -75,7 +78,11 @@ export default function TableView({
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {tasks.map(task => (
-              <tr key={task.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              <tr 
+                key={task.id} 
+                onClick={() => onTaskClick(task)}
+                className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+              >
                 {sortedHeaders.map(header => {
                   const cellKey = `${task.id}-${header}`;
                   let value = '';
@@ -99,7 +106,14 @@ export default function TableView({
                       {header === 'Status' ? (
                         <select
                           value={task.status}
-                          onChange={(e) => onStatusChange(task.id, e.target.value)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            onStatusChange(task.id, e.target.value);
+                            console.log(task.id, e.target.value);
+                            console.log(task.status);
+                            console.log(STATUS_COLORS[e.target.value]);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           className={`px-2 py-1 text-xs rounded-full border ${STATUS_COLORS[task.status] || 'bg-gray-100 text-gray-800 border-gray-300'} cursor-pointer`}
                         >
                           {KANBAN_COLUMNS.map(status => (
@@ -115,12 +129,13 @@ export default function TableView({
                             onChange={(e) => setEditValue(e.target.value)}
                             onBlur={() => handleSave(task.id, header)}
                             onKeyDown={(e) => handleKeyDown(e, task.id, header)}
+                            onClick={(e) => e.stopPropagation()}
                             className="w-full px-2 py-1 border border-blue-400 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             autoFocus
                           />
                         ) : (
                           <div
-                            onClick={() => handleEdit(task.id, header, value)}
+                            onClick={(e) => handleEdit(e, task.id, header, value)}
                             className="text-sm cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 text-gray-900 dark:text-white"
                             title={value}
                           >
@@ -138,12 +153,13 @@ export default function TableView({
                           onChange={(e) => setEditValue(e.target.value)}
                           onBlur={() => handleSave(task.id, header)}
                           onKeyDown={(e) => handleKeyDown(e, task.id, header)}
+                          onClick={(e) => e.stopPropagation()}
                           className="w-full px-2 py-1 border border-blue-400 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           autoFocus
                         />
                       ) : (
                         <div
-                          onClick={() => handleEdit(task.id, header, value)}
+                          onClick={(e) => handleEdit(e, task.id, header, value)}
                           className="text-sm cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 text-gray-900 dark:text-white"
                           title={value}
                         >
