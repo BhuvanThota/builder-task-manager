@@ -2,8 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  height: 100%;
+}
+
 body {
   @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-white font-sans;
+  min-height: 100%;
 }
 
 /* Custom scrollbar for better UX */
@@ -24,4 +29,29 @@ body {
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-500 dark:bg-gray-500;
   }
+
+  /* Hide scrollbar for webkit browsers */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
+/* Dark mode specific adjustments */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }

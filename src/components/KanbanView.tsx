@@ -74,21 +74,31 @@ export default function KanbanView({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
       {KANBAN_COLUMNS.map(column => (
-        <div 
-          key={column} 
-          className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4"
-          onDragEnter={(e) => handleDragEnter(e, column)}
-          onDragLeave={handleDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, column)}
-        >
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-sm">
-            {column} ({getTasksByStatus(column).length})
-          </h3>
-          <div
-            className={`min-h-[200px] space-y-2 rounded-lg transition-colors ${
+        <div key={column} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div 
+            className={`p-4 border-b border-gray-200 dark:border-gray-700 ${
               dragOverColumn === column ? 'bg-blue-50 dark:bg-blue-900/20' : ''
             }`}
+            onDragEnter={(e) => handleDragEnter(e, column)}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, column)}
+          >
+            <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center justify-between">
+              <span>{column}</span>
+              <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full text-xs">
+                {getTasksByStatus(column).length}
+              </span>
+            </h3>
+          </div>
+          <div
+            className={`p-4 space-y-3 min-h-[400px] transition-colors ${
+              dragOverColumn === column ? 'bg-blue-50 dark:bg-blue-900/10' : ''
+            }`}
+            onDragEnter={(e) => handleDragEnter(e, column)}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, column)}
           >
             {getTasksByStatus(column).map((task) => {
               const isExpanded = expandedTasks.has(task.id);
@@ -100,35 +110,41 @@ export default function KanbanView({
                   draggable
                   onDragStart={(e) => handleDragStart(e, task)}
                   onDragEnd={handleDragEnd}
-                  className={`bg-white dark:bg-gray-700 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 cursor-move transition-all ${
-                    draggingTask?.id === task.id ? 'opacity-50' : 'hover:shadow-md'
+                  className={`bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 cursor-move transition-all group ${
+                    draggingTask?.id === task.id ? 'opacity-50' : 'hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500'
                   }`}
                 >
-                  <div className="flex items-start gap-2">
-                    <div className="mt-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
-                      <GripVertical size={16} />
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <GripVertical size={14} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 dark:text-white text-sm">
-                        {displayName.length > 50 && !isExpanded 
-                          ? displayName.substring(0, 50) + '...' 
+                      <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">
+                        {displayName.length > 60 && !isExpanded 
+                          ? displayName.substring(0, 60) + '...' 
                           : displayName}
                       </h4>
                       
+                      <div className="flex items-center justify-between mb-3">
+                        <span className={`inline-block px-2 py-1 text-xs rounded-full border ${STATUS_COLORS[task.status] || 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'}`}>
+                          {task.status}
+                        </span>
+                      </div>
+
                       {task.assignee && (
-                        <div className="flex items-center gap-1 mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-2 mb-2 text-xs text-gray-600 dark:text-gray-400">
                           <User size={12} />
                           <span className="truncate">{task.assignee}</span>
                         </div>
                       )}
                       
                       {isExpanded && (
-                        <div className="mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="mt-3 space-y-2 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600 pt-3">
                           {Object.entries(task).map(([key, value]) => {
                             if (!['id', 'status', 'assignee', 'createdAt'].includes(key) && value) {
                               return (
                                 <div key={key} className="break-words">
-                                  <span className="font-medium">{key}:</span> {value.toString()}
+                                  <span className="font-medium text-gray-700 dark:text-gray-300">{key}:</span> {value.toString()}
                                 </div>
                               );
                             }
@@ -137,27 +153,35 @@ export default function KanbanView({
                         </div>
                       )}
                       
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${STATUS_COLORS[task.status] || 'bg-gray-100 text-gray-800 border-gray-300'}`}>
-                          {task.status}
-                        </span>
-                        {displayName.length > 50 && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleTaskExpansion(task.id);
-                            }}
-                            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                          >
-                            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                          </button>
-                        )}
-                      </div>
+                      {displayName.length > 60 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTaskExpansion(task.id);
+                          }}
+                          className="mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs flex items-center gap-1"
+                        >
+                          {isExpanded ? (
+                            <>Show less <ChevronUp size={12} /></>
+                          ) : (
+                            <>Show more <ChevronDown size={12} /></>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
               );
             })}
+            
+            {getTasksByStatus(column).length === 0 && (
+              <div className="text-center py-8 text-gray-400 dark:text-gray-500">
+                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <GripVertical size={20} />
+                </div>
+                <p className="text-sm">No tasks in {column.toLowerCase()}</p>
+              </div>
+            )}
           </div>
         </div>
       ))}
