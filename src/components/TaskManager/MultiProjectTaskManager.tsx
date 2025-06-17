@@ -59,15 +59,23 @@ export default function MultiProjectTaskManager() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Project | null>(null);
 
   // Initialize app on mount
-  useEffect(() => {
-    const initialAppState = StorageService.getAppState();
-    setAppState(initialAppState);
+// Keep only this useEffect and modify it:
+useEffect(() => {
+  const initialAppState = StorageService.getAppState();
+  
+  // If no current project is set but projects exist, set to first project
+  if (!initialAppState.currentProjectId && initialAppState.projects.length > 0) {
+    initialAppState.currentProjectId = initialAppState.projects[0].id;
+  }
+  
+  setAppState(initialAppState);
 
-    if (initialAppState.currentProjectId) {
-      const data = StorageService.getProjectData(initialAppState.currentProjectId);
-      setProjectData(data);
-    }
-  }, []);
+  if (initialAppState.currentProjectId) {
+    const data = StorageService.getProjectData(initialAppState.currentProjectId);
+    setProjectData(data);
+  }
+}, []);
+
 
   // Save app state whenever it changes
   useEffect(() => {

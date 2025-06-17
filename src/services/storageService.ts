@@ -81,25 +81,38 @@ export class StorageService {
   static getAppState(): AppState {
     try {
       const stored = localStorage.getItem(this.KEYS.APP_STATE);
+      const projects = this.getProjects(); // Always get current projects from storage
+      
+      
       if (stored) {
         const parsed = JSON.parse(stored) as AppState;
-        return {
-          currentProjectId: parsed.currentProjectId || null,
-          projects: parsed.projects || [],
+        
+        // Always use the actual projects from storage, not the stored app state projects
+        const result = {
+          currentProjectId: parsed.currentProjectId || (projects.length > 0 ? projects[0].id : null),
+          projects: projects, // Use actual projects from storage
           darkMode: parsed.darkMode || false,
           sidebarCollapsed: parsed.sidebarCollapsed || false,
         };
+        
+        return result;
+      } else {
+        console.warn(`[StorageService] No app state found in localStorage under '${this.KEYS.APP_STATE}'`);
       }
     } catch (error) {
       console.error('Error reading app state:', error);
     }
     
-    return {
-      currentProjectId: null,
-      projects: [],
+    // Fallback: create new app state with current projects
+    const projects = this.getProjects();
+    const fallbackState = {
+      currentProjectId: projects.length > 0 ? projects[0].id : null,
+      projects: projects,
       darkMode: false,
       sidebarCollapsed: false,
     };
+    
+    return fallbackState;
   }
 
   static saveAppState(state: AppState): void {
